@@ -1,0 +1,10 @@
+{
+    "name": "Self-Control Chrome Extension",
+    "description": "End your procrastination yourself!",
+    "version": "1.0",
+    "manifest_version": 3,
+    "action": {
+      "default_popup": "index.html",
+      "default_icon": "assets/logo.ico"
+    }
+  }
