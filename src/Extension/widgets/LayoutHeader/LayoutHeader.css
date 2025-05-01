@@ -4,6 +4,7 @@
     padding: 5px;
     justify-content: space-between;
     align-items: center;
+    box-sizing: border-box;
 }
 
 .header-spacer{
@@ -18,4 +19,14 @@
 
 .header-button{
     height: 20px;
+    transition: filter .3s ease-out;
+}
+
+.header-button:hover{
+    animation: var(--button-shake);
+    filter: brightness(0.85);
+}
+
+.header-button:active{
+    filter: brightness(0.70);
 }

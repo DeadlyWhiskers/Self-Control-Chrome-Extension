@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
 
-:root{
+:root {
   /* Colors */
   --brownish-white: #FAF9F9;
   --brownish-gray: #AC9A9A;
@@ -39,16 +39,55 @@
   --radius-small: 5px;
 
   --radius-text-input: var(--radius-small);
+
+  /* Animations */
+  --button-shake: shake .5s ease-out 1 alternate;
+  --button-shake-upside-down: shake-upside-down .5s ease-out 1 alternate;
 }
 
-body {
+@keyframes shake {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  33% {
+    transform: rotate(-10deg);
+  }
+
+  66% {
+    transform: rotate(10deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+html,
+body,
+#root {
   width: 320px;
+  max-height: 480px;
+  overflow: hidden;
   margin: 0;
 }
 
-.list-layout{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    
+.list-layout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.content-block {
+  display: flex;
+  border-radius: var(--radius-large);
+  flex-direction: column;
+}
+
+.content-block--large {
+  background-color: var(--block-color);
+  padding: 10px;
+  box-sizing: border-box;
+  width: 100%;
 }
