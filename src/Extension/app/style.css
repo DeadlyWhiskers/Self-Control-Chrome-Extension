@@ -32,7 +32,13 @@
   --header-font: normal 900 var(--header-font-size) 'Roboto', sans-serif;
   --regular-font: normal 900 var(--default-font-size) 'Roboto', sans-serif;
   --title-font: normal bold var(--default-font-size) 'Roboto', sans-serif;
-  
+
+  /* Corner radius */
+  --radius-circle: 1000px;
+  --radius-large: 10px;
+  --radius-small: 5px;
+
+  --radius-text-input: var(--radius-small);
 }
 
 body {
@@ -40,3 +46,9 @@ body {
   margin: 0;
 }
 
+.list-layout{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+}

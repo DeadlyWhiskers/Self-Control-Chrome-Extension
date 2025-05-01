@@ -1,5 +1,5 @@
 const SettingsPage = () => {
-    return <div>
+    return <div className='list-layout'>
         Settings page
     </div>;
 };

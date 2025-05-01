@@ -1,5 +1,7 @@
+import './HomePage.css'
+
 const HomePage = () => {
-    return <div>
+    return <div className='list-layout'>
         Home page
     </div>;
 };

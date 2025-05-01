@@ -1,6 +1,9 @@
 .layout{
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     background-color: var(--layout-background);
+    padding: 15px;
+    box-sizing: border-box;
 }

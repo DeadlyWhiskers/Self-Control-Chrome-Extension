@@ -1,15 +1,11 @@
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import "./Layout.css"
+import LayoutHeader from "./LayoutHeader/LayoutHeader";
 
 const Layout = () => {
     return (
         <div className="layout">
-            <Link to="">
-                Home
-            </Link>
-            <Link to="settings">
-                Settings
-            </Link>
+            <LayoutHeader/>
             <Outlet/>
         </div>
     );
