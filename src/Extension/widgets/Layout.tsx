@@ -1,8 +1,9 @@
 import { Link, Outlet } from "react-router-dom";
+import "./Layout.css"
 
 const Layout = () => {
     return (
-        <>
+        <div className="layout">
             <Link to="">
                 Home
             </Link>
@@ -10,7 +11,7 @@ const Layout = () => {
                 Settings
             </Link>
             <Outlet/>
-        </>
+        </div>
     );
 };
 
