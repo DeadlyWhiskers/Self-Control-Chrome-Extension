@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
 :root{
   /* Colors */
   --brownish-white: #FAF9F9;
@@ -22,9 +24,19 @@
   --add-button-symbol: var(--brownish-gray);
   --positive-color: var(--light-green);
   --negative-color: var(--light-red);
+
+  /* Font */
+  --header-font-size: 20px;
+  --default-font-size: 14px;
+
+  --header-font: normal 900 var(--header-font-size) 'Roboto', sans-serif;
+  --regular-font: normal 900 var(--default-font-size) 'Roboto', sans-serif;
+  --title-font: normal bold var(--default-font-size) 'Roboto', sans-serif;
+  
 }
 
-.body {
+body {
   width: 320px;
+  margin: 0;
 }
 
