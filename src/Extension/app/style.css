@@ -38,11 +38,15 @@
   --radius-large: 10px;
   --radius-small: 5px;
 
+  --corner-radius-button: var(--radius-large);
   --radius-text-input: var(--radius-small);
 
   /* Animations */
   --button-shake: shake .5s ease-out 1 alternate;
   --button-shake-upside-down: shake-upside-down .5s ease-out 1 alternate;
+
+  /* Border width */
+  --add-button-border-width: 2px;
 }
 
 @keyframes shake {
@@ -126,4 +130,45 @@ body,
 
 .button:focus{
   outline: none;
+}
+
+.input-line{
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-content: center;
+  align-items: center;
+}
+
+.input-field{
+  font: var(--regular-font);
+  color: var(--text-color-accent);
+  background-color: var(--text-input-color);
+  border-radius: var(--radius-small);
+  border: 0;
+  padding: 5px;
+}
+
+.input-field:focus{
+  outline: none;
+}
+
+.input-field:hover{
+  filter: brightness(0.95);
+}
+
+.input-field--short{
+  width: 8ch;
+}
+
+.horizontal-spread-area{
+  display: flex;
+  justify-content: space-between;
+}
+
+.buttons-area{
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  align-self: flex-end;
 }

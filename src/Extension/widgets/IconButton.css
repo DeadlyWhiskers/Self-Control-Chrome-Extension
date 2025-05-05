@@ -3,7 +3,7 @@
     justify-content: center;
     align-items: center;
     padding: 0;
-    border-radius: var(--radius-large);
+    border-radius: var(--corner-radius-button);
     border: none;
 }
 

@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react';
 import IconButton from "./IconButton";
 
-import CrossIcon from './assets/CrossIcon.svg'
-import TickIcon from './assets/TickIcon.svg'
 import TrashIcon from './assets/TrashIcon.svg'
 import './WebsiteBlock.css'
 

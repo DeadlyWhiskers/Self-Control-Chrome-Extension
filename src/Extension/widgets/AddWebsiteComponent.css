@@ -1,0 +1,23 @@
+.add-website-component{
+    display: flex;
+    flex-direction: column;
+}
+
+.button--add-website{
+    background-color: var(--add-button-color);
+    display: flex;
+    justify-content: center;
+    padding: 5px;
+    width: 100%;
+    border-radius: var(--corner-radius-button);
+    border-color: var(--add-button-stroke);
+    border-style: dashed;
+    border-width: var(--add-button-border-width);
+    box-sizing: border-box;
+}
+
+.add-limits-time-area{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}

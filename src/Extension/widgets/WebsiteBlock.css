@@ -102,19 +102,7 @@
     visibility: hidden;
 }
 
-.horizontal-spread-area{
-    display: flex;
-    justify-content: space-between;
-}
-
 .limits-time-area{
     display: flex;
     gap: 10px;
-}
-
-.buttons-area{
-    display: flex;
-    align-items: flex-end;
-    gap: 10px;
-    align-self: flex-end;
 }

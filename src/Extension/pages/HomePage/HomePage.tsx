@@ -1,3 +1,4 @@
+import AddWebsiteComponent from '../../widgets/AddWebsiteComponent';
 import ContentBlock from '../../widgets/WebsiteBlock';
 import './HomePage.css'
 
@@ -6,6 +7,7 @@ const HomePage = () => {
         {[...Array(3)].map((_,i) => {
             return <ContentBlock key={i} elementId={i}/>
         })}
+        <AddWebsiteComponent/>
     </div>;
 };
 
