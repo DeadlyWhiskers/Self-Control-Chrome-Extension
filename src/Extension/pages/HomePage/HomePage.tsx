@@ -1,4 +1,4 @@
-import ContentBlock from '../../widgets/ContentBlock';
+import ContentBlock from '../../widgets/WebsiteBlock';
 import './HomePage.css'
 
 const HomePage = () => {

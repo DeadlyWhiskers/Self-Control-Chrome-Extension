@@ -90,4 +90,40 @@ body,
   padding: 10px;
   box-sizing: border-box;
   width: 100%;
+  gap: 10px;
+}
+
+.content-block--small {
+  background-color: var(--subblock-color);
+  padding: 10px 5px;
+  box-sizing: border-box;
+  gap: 5px;
+  align-items: center;
+}
+
+.title{
+  font: var(--title-font);
+  color: var(--text-color-dull);
+}
+
+.regular-text{
+  font: var(--regular-font);
+  color: var(--text-color-accent);
+}
+
+.button{
+  transition: transform .3s ease-out, filter .1s ease-out;
+}
+
+.button:hover{
+  filter: brightness(0.85);
+  cursor: pointer;
+}
+
+.button:active{
+  filter: brightness(0.70);
+}
+
+.button:focus{
+  outline: none;
 }
