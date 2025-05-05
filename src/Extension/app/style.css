@@ -35,10 +35,13 @@
 
   /* Corner radius */
   --radius-circle: 1000px;
-  --radius-large: 10px;
+  --radius-large: 20px;
+  --radius-medium: 10px;
   --radius-small: 5px;
 
-  --corner-radius-button: var(--radius-large);
+  --corner-radius-block-large: var(--radius-small);
+  --corner-radius-block-small: var(--radius-small);
+  --corner-radius-button: var(--radius-medium);
   --radius-text-input: var(--radius-small);
 
   /* Animations */
@@ -85,11 +88,11 @@ body,
 
 .content-block {
   display: flex;
-  border-radius: var(--radius-large);
   flex-direction: column;
 }
 
 .content-block--large {
+  border-radius: var(--corner-radius-block-large);
   background-color: var(--block-color);
   padding: 10px;
   box-sizing: border-box;
@@ -98,6 +101,7 @@ body,
 }
 
 .content-block--small {
+  border-radius: var(--corner-radius-block-small);
   background-color: var(--subblock-color);
   padding: 10px 5px;
   box-sizing: border-box;
