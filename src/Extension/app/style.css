@@ -138,6 +138,11 @@ body,
   outline: none;
 }
 
+.button:disabled{
+  cursor: not-allowed;
+  filter: saturate(0);
+}
+
 .input-line{
   display: flex;
   justify-content: space-between;
@@ -168,7 +173,7 @@ body,
 }
 
 .input-field--short{
-  width: 8ch;
+  width: 7.2ch;
 }
 
 .horizontal-spread-area{
@@ -181,4 +186,9 @@ body,
   align-items: flex-end;
   gap: 10px;
   align-self: flex-end;
+}
+
+.error{
+  color: var(--negative-color);
+  font: var(--title-font);
 }
