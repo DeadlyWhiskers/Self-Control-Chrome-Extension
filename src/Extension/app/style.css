@@ -192,3 +192,9 @@ body,
   color: var(--negative-color);
   font: var(--title-font);
 }
+
+.vertical-list{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

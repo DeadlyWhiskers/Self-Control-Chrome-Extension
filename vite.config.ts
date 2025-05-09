@@ -12,10 +12,14 @@ export default defineConfig({
           dest: '.',
         },
         {
+          src: 'src/Extension/app/service_worker.js',
+          dest: '.',
+        },
+        {
           src: 'src/Extension/app/assets/logo.ico',
           dest: './assets',
         }
       ],
     })
-  ],
+  ]
 })

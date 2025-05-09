@@ -1,14 +1,29 @@
 import { useRef, useState } from 'react';
 import IconButton from "./IconButton";
+import StorageType from '../shared/types/StorageType';
 
 import TrashIcon from './assets/TrashIcon.svg'
 import './WebsiteBlock.css'
 
 type ContentBlockProps = {
-    elementId: number;
+    elementId: number,
+    siteName: string,
+    siteURL: string,
+    limitTime: string,
+    cooldownTime: string,
+    onClick?: (siteToDelete: string) => void
 }
 
-const ContentBlock = ({ elementId }: ContentBlockProps) => {
+const removeSite = (url: string) => {
+    chrome.storage.sync.get({sites: [] as StorageType[]}, (result: {sites: StorageType[]}) => {
+        const newSite = result.sites.filter((el) => el.address !== url)
+        chrome.storage.sync.set({sites: newSite}, () =>{
+            chrome.storage.sync.get({sites: [] as StorageType[]}, (result: {sites: StorageType[]}) => console.log(result.sites))
+        })
+    })
+}
+
+const ContentBlock = (props: ContentBlockProps) => {
 
     const checkboxRef = useRef<HTMLInputElement>(null);
     const [isChecked, setChecked] = useState(() => checkboxRef.current?.checked ?? false);
@@ -17,45 +32,47 @@ const ContentBlock = ({ elementId }: ContentBlockProps) => {
         setChecked(checkboxRef.current?.checked ?? false);
     };
 
-
-    return ((elementId !== undefined) &&
+    return ((props.elementId !== undefined) &&
         <div className='content-block content-block--large'>
             <div className='dropdown-area'>
                 <div className='content-upper-area'>
                     <div className='content-url-area'>
-                        <input type="checkbox" className='dropdown-checkbox' id={elementId.toString()} ref={checkboxRef} onChange={handleCheckboxChange} />
-                        <label className='dropdown-checkbox-label' htmlFor={elementId.toString()} />
+                        <input type="checkbox" className='dropdown-checkbox' id={props.elementId.toString()} ref={checkboxRef} onChange={handleCheckboxChange} />
+                        <label className='dropdown-checkbox-label' htmlFor={props.elementId.toString()} />
                         <span className='content-url'>
-                            reddit.com
+                            {props.siteName}
                         </span>
                     </div>
-                    <span className={`content-time ${elementId % 2 === 0 ? 'content-time--left' : 'content-time--timeout'}`}>
-                        {elementId}
+                    <span className={`content-time ${props.elementId % 2 === 0 ? 'content-time--left' : 'content-time--timeout'}`}>
+                        {props.elementId}
                     </span>
                 </div>
                 <div className={`dropdown-content ${isChecked ? 'dropdown-content--visible' : 'dropdown-content--invisible'}`}>
-                    <div className='spacer-height-10px'/>
-                    <div className='horizontal-spread-area'>
-                        <div className='limits-time-area'>
-                            <div className="content-block content-block--small">
-                                <span className="title">
-                                    Limit
-                                </span>
-                                <span className='regular-text'>
-                                    muhahaha
-                                </span>
+                    <div className='spacer-height-10px' />
+                    <div className="vertical-list">
+                        <span className="title">{props.siteURL}</span>
+                        <div className='horizontal-spread-area'>
+                            <div className='limits-time-area'>
+                                <div className="content-block content-block--small">
+                                    <span className="title">
+                                        Limit
+                                    </span>
+                                    <span className='regular-text'>
+                                        {props.limitTime}
+                                    </span>
+                                </div>
+                                <div className="content-block content-block--small">
+                                    <span className="title">
+                                        Cooldown
+                                    </span>
+                                    <span className='regular-text'>
+                                        {props.cooldownTime}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="content-block content-block--small">
-                                <span className="title">
-                                    Cooldown
-                                </span>
-                                <span className='regular-text'>
-                                    nyahahahah
-                                </span>
+                            <div className='buttons-area'>
+                                <IconButton color='var(--negative-color)' image={TrashIcon} onClick={() => {removeSite(props.siteURL)}}/>
                             </div>
-                        </div>
-                        <div className='buttons-area'>
-                            <IconButton color='var(--negative-color)' image={TrashIcon}/>
                         </div>
                     </div>
                 </div>

@@ -4,7 +4,13 @@
     "version": "1.0",
     "manifest_version": 3,
     "action": {
-      "default_popup": "index.html",
-      "default_icon": "assets/logo.ico"
+      "default_popup": "index.html"
+    },
+    "permissions": [
+      "storage"
+    ],
+    "background":{
+      "service_worker": "service_worker.js",
+      "type": "module"
     }
   }

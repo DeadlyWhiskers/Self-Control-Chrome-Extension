@@ -8,30 +8,51 @@ import { useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import StorageType from '../shared/types/StorageType'
+import timeToMS from '../shared/timeToSeconds'
 
-const timeToSeconds = (time: string): number => {
-    let seconds = 0;
-    const numbers = time.split(':').reverse();
-    numbers.map((num, i) => {
-        seconds += +num * (60 ** i);
+const uploadWebsite = (data: FormFields) => {
+    return new Promise<void>((resolve, reject) => {
+        chrome.storage.sync.get({sites: [] as StorageType[]}, (result: {sites: StorageType[]}) => {
+            const urlToUpload = new URL(data.address);
+            result.sites.some((el) => {
+                try{
+                    console.log(new URL(el.address).hostname)
+                    if(new URL(el.address).origin === urlToUpload.origin) reject(new Error('This website is already added!'));
+                }catch{
+                    reject(new Error(`Invalid url was saved: ${el.address}, reinstall the extension`));
+                }
+            })
+            const newSite = [...result.sites, {
+                name: data.name,
+                address: urlToUpload.origin,
+                limitTime: data.limitTime,
+                cooldownTime: data.cooldownTime,
+                limitRemaining: timeToMS(data.limitTime),
+                cooldownRemaining: timeToMS(data.cooldownTime)
+            }];
+            chrome.storage.sync.set({sites: newSite}, () =>{
+                chrome.storage.sync.get({sites: [] as StorageType[]}, (result: {sites: StorageType[]}) => console.log(result.sites))
+                resolve();
+            })
+        })
     })
-    return seconds;
 }
 
 const formSchema = z.object({
     name: z.string().min(1,'This field is required'),
-    address: z.string().url().min(1,'This field is required'),
-    limitTime: z.string({required_error: 'This field is required'}).time({precision: 0}).min(1).max(8),
-    cooldownTime: z.string({required_error: 'This field is required'}).time({precision: 0}).min(1).max(8),
+    address: z.string().min(1,'This field is required').url(),
+    limitTime: z.string().min(1,'This field is required').max(8).time({precision: 0, message: 'Use HH:MM:SS'}),
+    cooldownTime: z.string().min(1,'This field is required').max(8).time({precision: 0, message: 'Use HH:MM:SS'}),
     formError: z.string().optional()
 })
-.refine((data) => timeToSeconds(data.limitTime) <= timeToSeconds(data.cooldownTime), {message: 'Cooldown time is less than a limit time', path: ['formError']})
+.refine((data) => timeToMS(data.limitTime) <= timeToMS(data.cooldownTime), {message: 'Cooldown time is less than a limit time', path: ['formError']})
 
 type FormFields = z.infer<typeof formSchema>
 
 const AddWebsiteComponent = () => {
     
-    console.log(timeToSeconds('20:44:15'))
+    console.log(timeToMS('20:44:15'))
 
     const [addActive, setAddActive] = useState(0);
 
@@ -44,11 +65,13 @@ const AddWebsiteComponent = () => {
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try{
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await uploadWebsite(data)
+            setAddActive(0);
+            reset();
         }
         catch(e){
             console.log(e)
-            setError('root', {message: 'Something went wrong'});
+            setError('formError', {message: (e instanceof Error) ? e.message : 'Unknown error'});
         }
         console.log('submitted', data);
     }
