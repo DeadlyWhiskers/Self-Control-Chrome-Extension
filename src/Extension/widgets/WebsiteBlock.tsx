@@ -1,16 +1,19 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, memo } from 'react';
 import IconButton from "./IconButton";
 import StorageType from '../shared/types/StorageType';
 
 import TrashIcon from './assets/TrashIcon.svg'
 import './WebsiteBlock.css'
+import MStoTime from '../shared/SecondsToTime';
 
 type ContentBlockProps = {
     elementId: number,
     siteName: string,
     siteURL: string,
-    limitTime: string,
-    cooldownTime: string,
+    limitTime: number,
+    cooldownTime: number,
+    limitRemaining: number,
+    cooldownRemaining: number,
     onClick?: (siteToDelete: string) => void
 }
 
@@ -43,9 +46,15 @@ const ContentBlock = (props: ContentBlockProps) => {
                             {props.siteName}
                         </span>
                     </div>
-                    <span className={`content-time ${props.elementId % 2 === 0 ? 'content-time--left' : 'content-time--timeout'}`}>
-                        {props.elementId}
+                    {props.limitRemaining > 0 ? 
+                    <span className={'content-time content-time--left'}>
+                        {MStoTime(props.limitRemaining)}
                     </span>
+                    :
+                    <span className={'content-time content-time--timeout'}>
+                        {MStoTime(props.cooldownRemaining)}
+                    </span>}
+                    
                 </div>
                 <div className={`dropdown-content ${isChecked ? 'dropdown-content--visible' : 'dropdown-content--invisible'}`}>
                     <div className='spacer-height-10px' />
@@ -58,7 +67,7 @@ const ContentBlock = (props: ContentBlockProps) => {
                                         Limit
                                     </span>
                                     <span className='regular-text'>
-                                        {props.limitTime}
+                                        {MStoTime(props.limitTime)}
                                     </span>
                                 </div>
                                 <div className="content-block content-block--small">
@@ -66,7 +75,7 @@ const ContentBlock = (props: ContentBlockProps) => {
                                         Cooldown
                                     </span>
                                     <span className='regular-text'>
-                                        {props.cooldownTime}
+                                        {MStoTime(props.cooldownTime)}
                                     </span>
                                 </div>
                             </div>
@@ -81,4 +90,4 @@ const ContentBlock = (props: ContentBlockProps) => {
     );
 };
 
-export default ContentBlock;
+export default memo(ContentBlock);

@@ -1,10 +1,10 @@
 type StorageType = {
-    name: string;
-    address: string;
-    limitTime: string;
-    cooldownTime: string;
-    limitRemaining: number;
-    cooldownRemaining: number;
+    name: string,
+    address: string,
+    limitTime: number,
+    cooldownTime: number,
+    limitRemaining: number,
+    cooldownRemaining: number
 };
 
 export default StorageType;

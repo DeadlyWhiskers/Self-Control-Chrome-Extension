@@ -26,13 +26,12 @@ const uploadWebsite = (data: FormFields) => {
             const newSite = [...result.sites, {
                 name: data.name,
                 address: urlToUpload.origin,
-                limitTime: data.limitTime,
-                cooldownTime: data.cooldownTime,
+                limitTime: timeToMS(data.limitTime),
+                cooldownTime: timeToMS(data.cooldownTime),
                 limitRemaining: timeToMS(data.limitTime),
                 cooldownRemaining: timeToMS(data.cooldownTime)
             }];
             chrome.storage.sync.set({sites: newSite}, () =>{
-                chrome.storage.sync.get({sites: [] as StorageType[]}, (result: {sites: StorageType[]}) => console.log(result.sites))
                 resolve();
             })
         })
