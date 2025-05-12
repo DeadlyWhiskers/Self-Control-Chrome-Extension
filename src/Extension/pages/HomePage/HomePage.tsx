@@ -37,6 +37,7 @@ const HomePage = () => {
         const Initialize = async () => {
             chrome.storage.sync.onChanged.addListener(handleStoreUpdates)
             chrome.tabs.onActivated.addListener(handleTabsUpdate)
+            chrome.tabs.onUpdated.addListener(handleTabsUpdate)
             connectPort.current = chrome.runtime.connect({ name: 'sitesSync' });
             
             activeTabs.current = await getActiveTabs()
@@ -78,6 +79,7 @@ const HomePage = () => {
         return () => {
             // only when switching extension pages
             chrome.tabs.onActivated.removeListener(handleTabsUpdate)
+            chrome.tabs.onUpdated.removeListener(handleTabsUpdate)
             chrome.storage.sync.onChanged.removeListener(handleStoreUpdates)
             clearInterval(updateInterval.current)
             connectPort.current?.disconnect()

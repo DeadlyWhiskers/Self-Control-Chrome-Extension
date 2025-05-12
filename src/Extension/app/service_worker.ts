@@ -120,7 +120,9 @@ init()
 
 
 
-// chrome.tabs.onActivated.addListener(backgroundTick)
+chrome.tabs.onActivated.addListener(backgroundTick)
+chrome.tabs.onUpdated.addListener(backgroundTick)
+
 chrome.alarms.create('tick', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name == 'tick') {

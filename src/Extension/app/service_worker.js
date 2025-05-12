@@ -176,7 +176,8 @@ var init = function () { return __awaiter(void 0, void 0, void 0, function () {
     });
 }); };
 init();
-// chrome.tabs.onActivated.addListener(backgroundTick)
+chrome.tabs.onActivated.addListener(backgroundTick);
+chrome.tabs.onUpdated.addListener(backgroundTick);
 chrome.alarms.create('tick', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener(function (alarm) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
