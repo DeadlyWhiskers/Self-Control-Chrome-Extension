@@ -12,8 +12,9 @@ type ContentBlockProps = {
     siteURL: string,
     limitTime: number,
     cooldownTime: number,
-    limitRemaining: number,
-    cooldownRemaining: number,
+    limitRemaining: string,
+    cooldownRemaining: string,
+    isLimitEnded: boolean,
     onClick?: (siteToDelete: string) => void
 }
 
@@ -46,13 +47,13 @@ const ContentBlock = (props: ContentBlockProps) => {
                             {props.siteName}
                         </span>
                     </div>
-                    {props.limitRemaining > 0 ? 
+                    {props.isLimitEnded ? 
                     <span className={'content-time content-time--left'}>
-                        {MStoTime(props.limitRemaining)}
+                        {props.limitRemaining}
                     </span>
                     :
                     <span className={'content-time content-time--timeout'}>
-                        {MStoTime(props.cooldownRemaining)}
+                        {props.cooldownRemaining}
                     </span>}
                     
                 </div>

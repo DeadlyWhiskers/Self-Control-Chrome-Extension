@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import AddWebsiteComponent from '../../widgets/AddWebsiteComponent';
 import ContentBlock from '../../widgets/WebsiteBlock';
 import StorageType from '../../shared/types/StorageType';
+import SettingsType from '../../shared/types/SettingsType';
+import { fetchSites, getActiveTabs, fetchSettings } from '../../shared/chromeGetters';
 import './HomePage.css'
-import { fetchSites, getActiveTabs } from '../../shared/chromeGetters';
+import MStoTime from '../../shared/SecondsToTime';
 
 // Completely rework the timer system
 
@@ -15,6 +17,7 @@ const HomePage = () => {
     const lastUpdate = useRef<number>(Date.now());
     const connectPort = useRef<chrome.runtime.Port | undefined>(undefined)
     const removeTab = useRef<number | undefined>(undefined);
+    const settings = useRef<SettingsType | undefined>(undefined)
 
     const handleStoreUpdates = async (changes: { [key: string]: chrome.storage.StorageChange; }) => {
         if (changes.sites) {
@@ -36,10 +39,11 @@ const HomePage = () => {
             chrome.tabs.onActivated.addListener(handleTabsUpdate)
             connectPort.current = chrome.runtime.connect({ name: 'sitesSync' });
             
+            activeTabs.current = await getActiveTabs()
+            settings.current = await fetchSettings()
             const siteResult = await fetchSites()
             setSiteList(siteResult.sites)
             // lastUpdate.current = siteResult.lastUpdate
-            activeTabs.current = await getActiveTabs()
     
             updateInterval.current = setInterval(() => {
                 const now = Date.now();
@@ -91,7 +95,16 @@ const HomePage = () => {
 
     return <div className='list-layout'>
         {siteList && siteList.map((el, i) => {
-            return <ContentBlock key={i} elementId={i} siteName={el.name} siteURL={el.address} limitTime={el.limitTime} cooldownTime={el.cooldownTime} limitRemaining={el.limitRemaining} cooldownRemaining={el.cooldownRemaining} />
+            return <ContentBlock 
+            key={i} 
+            elementId={i} 
+            siteName={el.name} 
+            siteURL={el.address} 
+            limitTime={el.limitTime} 
+            cooldownTime={el.cooldownTime} 
+            limitRemaining={settings.current?.showLimit ? MStoTime(el.limitRemaining) : '●'} 
+            cooldownRemaining={settings.current?.showCooldown ? MStoTime(el.cooldownRemaining) : '●'} 
+            isLimitEnded={el.limitRemaining > 0} />
         })}
         <AddWebsiteComponent />
     </div>;

@@ -1,5 +1,4 @@
 import StorageType from "../shared/types/StorageType"
-// import { fetchSites } from "../shared/chromeGetters"
 
 const initStorage = () => {
     return new Promise((resolve) => {

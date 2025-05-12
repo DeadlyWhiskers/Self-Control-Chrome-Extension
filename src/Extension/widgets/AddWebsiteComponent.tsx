@@ -31,7 +31,7 @@ const uploadWebsite = (data: FormFields) => {
                 limitRemaining: timeToMS(data.limitTime),
                 cooldownRemaining: timeToMS(data.cooldownTime)
             }];
-            chrome.storage.sync.set({sites: newSite}, () =>{
+            chrome.storage.sync.set({sites: newSite, lastUpdate: Date.now()}, () =>{
                 resolve();
             })
         })
