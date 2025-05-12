@@ -3,6 +3,7 @@ import AddWebsiteComponent from '../../widgets/AddWebsiteComponent';
 import ContentBlock from '../../widgets/WebsiteBlock';
 import StorageType from '../../shared/types/StorageType';
 import './HomePage.css'
+import { fetchSites, getActiveTabs } from '../../shared/chromeGetters';
 
 // Completely rework the timer system
 
@@ -10,88 +11,77 @@ const HomePage = () => {
 
     const [siteList, setSiteList] = useState<StorageType[]>([]);
     const activeTabs = useRef<chrome.tabs.Tab[] | null>(null);
-    const updateInterval = useRef<number | undefined>(undefined);
+    const updateInterval = useRef<number | undefined>(Date.now());
     const lastUpdate = useRef<number>(Date.now());
     const connectPort = useRef<chrome.runtime.Port | undefined>(undefined)
     const removeTab = useRef<number | undefined>(undefined);
 
-    const handleStoreUpdates = (changes: { [key: string]: chrome.storage.StorageChange; }) => {
-        if (changes.sites) fetchSites();
+    const handleStoreUpdates = async (changes: { [key: string]: chrome.storage.StorageChange; }) => {
+        if (changes.sites) {
+            const siteResult = await fetchSites()
+            setSiteList(siteResult.sites)
+            lastUpdate.current = siteResult.lastUpdate
+        }
     }
 
-    const handleTabsUpdate = () => {
-        getActiveTabs()
+    const handleTabsUpdate = async () => {
+        activeTabs.current = await getActiveTabs()
     }
 
-    const fetchSites = () => {
-        chrome.storage.sync.get({ sites: [] as StorageType[] }, (result: { sites: StorageType[], lastUpdate: number }) => {
-            setSiteList(result.sites);
-            lastUpdate.current = result.lastUpdate
-        })
-    }
-
-    const getActiveTabs = () => {
-        chrome.tabs.query(({ active: true }), (tabs) => {
-            activeTabs.current = tabs;
-            console.log(activeTabs.current[0].url)
-        })
-    }
-
+    // Create an async function for initialization + async function fro closing tab (if possible (i don't think so))
     useEffect(() => {
-        chrome.storage.sync.onChanged.addListener(handleStoreUpdates)
-        chrome.tabs.onActivated.addListener(handleTabsUpdate)
-        connectPort.current = chrome.runtime.connect({ name: 'sites-sync' });
 
-        fetchSites()
-        getActiveTabs()
-
-        chrome.runtime.onSuspend.addListener(() => {
-            chrome.tabs.onActivated.removeListener(handleTabsUpdate)
-            chrome.storage.sync.onChanged.removeListener(handleStoreUpdates)
-            clearInterval(updateInterval.current)
-            chrome.storage.sync.set({ sites: siteList, lastUpdate: Date.now() }, () => {
-
-            })
-        })
-
-        updateInterval.current = setInterval(() => {
-            const now = Date.now();
-            const delta = now - lastUpdate.current;
-            lastUpdate.current = now;
-            setSiteList((prevList) => prevList.map(el => {
-                let updatedEl = { ...el };
-                activeTabs.current?.forEach((activeTab: chrome.tabs.Tab) => {
-                    if (activeTab.url?.startsWith(updatedEl.address)) {
-                        updatedEl.limitRemaining = Math.max(0, updatedEl.limitRemaining - delta);
-                        if (updatedEl.limitRemaining === 0 && activeTab.id !== undefined) {
-                            console.log('the tab will be closed')
-                            removeTab.current = activeTab.id;
+        const Initialize = async () => {
+            chrome.storage.sync.onChanged.addListener(handleStoreUpdates)
+            chrome.tabs.onActivated.addListener(handleTabsUpdate)
+            connectPort.current = chrome.runtime.connect({ name: 'sitesSync' });
+            
+            const siteResult = await fetchSites()
+            setSiteList(siteResult.sites)
+            // lastUpdate.current = siteResult.lastUpdate
+            activeTabs.current = await getActiveTabs()
+    
+            updateInterval.current = setInterval(() => {
+                const now = Date.now();
+                const delta = now - lastUpdate.current;
+                lastUpdate.current = now;
+                console.log('Interval values: now:', now, 'lastUpdate current:' ,lastUpdate.current)
+                console.log(delta)
+                setSiteList((prevList) => prevList.map(el => {
+                    let updatedEl = { ...el };
+                    activeTabs.current?.forEach((activeTab: chrome.tabs.Tab) => {
+                        if (activeTab.url?.startsWith(updatedEl.address)) {
+                            updatedEl.limitRemaining = Math.max(0, updatedEl.limitRemaining - delta);
+                            if (updatedEl.limitRemaining === 0 && activeTab.id !== undefined) {
+                                console.log('the tab will be closed')
+                                removeTab.current = activeTab.id;
+                            }
                         }
+                    })
+                    updatedEl.cooldownRemaining = Math.max(0, updatedEl.cooldownRemaining - delta);
+                    if (updatedEl.cooldownRemaining === 0) {
+                        updatedEl.cooldownRemaining = updatedEl.cooldownTime;
+                        updatedEl.limitRemaining = updatedEl.limitTime;
                     }
-                })
-                updatedEl.cooldownRemaining = Math.max(0, updatedEl.cooldownRemaining - delta);
-                if (updatedEl.cooldownRemaining === 0) {
-                    updatedEl.cooldownRemaining = updatedEl.cooldownTime;
-                    updatedEl.limitRemaining = updatedEl.limitTime;
-                }
-                return updatedEl
-            }))
-            // connectPort.current?.postMessage({type: 'save list', content: [...siteList]})
-        }, 1000)
+                    console.log(updatedEl)
+                    return updatedEl
+                }))
+            }, 1000)
+        }
+
+        Initialize()
+
         return () => {
-            // only when switching extension pages, maybe useless
+            // only when switching extension pages
             chrome.tabs.onActivated.removeListener(handleTabsUpdate)
             chrome.storage.sync.onChanged.removeListener(handleStoreUpdates)
             clearInterval(updateInterval.current)
             connectPort.current?.disconnect()
-            // chrome.storage.sync.set({sites: siteList}, () => {
-            //     chrome.storage.sync.set({lastUpdate: Date.now()})
-            // })
         }
     }, [])
 
     useEffect(() => {
-        if (connectPort.current) connectPort.current?.postMessage({ type: 'sendToServiceWorker', content: {sitesList: siteList, lastUpdate: lastUpdate.current} })
+        if (connectPort.current) connectPort.current?.postMessage({ type: 'updateSiteList', content: {sitesList: siteList, lastUpdate: lastUpdate.current} })
         if (removeTab.current) {
             console.log('removing')
             chrome.tabs.remove(removeTab.current)
