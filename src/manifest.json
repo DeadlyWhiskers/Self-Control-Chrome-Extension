@@ -1,19 +1,25 @@
 {
-    "name": "Self-Control Chrome Extension",
-    "description": "End your procrastination yourself!",
-    "version": "1.0",
-    "manifest_version": 3,
-    "action": {
-      "default_popup": "index.html"
-    },
-    "permissions": [
-      "storage",
-      "alarms",
-      "tabs",
-      "activeTab"
-    ],
-    "background":{
-      "service_worker": "service_worker.js",
-      "type": "module"
-    }
+  "name": "Self-Control Chrome Extension",
+  "description": "End your procrastination yourself!",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "tabs",
+    "activeTab"
+  ],
+  "icons": {
+    "16": "./assets/icons/clock16.png",
+    "32": "./assets/icons/clock32.png",
+    "48": "./assets/icons/clock48.png",
+    "128": "./assets/icons/clock128.png"
+  },
+  "background": {
+    "service_worker": "service_worker.js",
+    "type": "module"
   }
+}
