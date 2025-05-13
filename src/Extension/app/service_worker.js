@@ -47,13 +47,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var initStorage = function () {
     return new Promise(function (resolve) {
-        resolve(true);
+        chrome.runtime.onInstalled.addListener(function () {
+            chrome.storage.sync.set({ sites: [], lastUpdate: Date.now(), showLimit: true, showCooldown: true, homeURL: 'https://www.google.com/' }, function () {
+                resolve(true);
+            });
+        });
     });
-    // chrome.runtime.onInstalled.addListener(() => {
-    //     chrome.storage.sync.set({sites: [] as StorageType[], lastUpdate: Date.now()}, () => {
-    //         console.log('Setup complete!');
-    //     })
-    // })
 };
 var fetchSites = function () {
     return new Promise(function (resolve) {
@@ -69,6 +68,20 @@ var getActiveTabs = function () {
         });
     });
 };
+var getTabsQuantity = function () {
+    return new Promise(function (resolve) {
+        chrome.tabs.query(({}), function (tabs) {
+            resolve(tabs.length);
+        });
+    });
+};
+var fetchSettings = function () {
+    return new Promise(function (resolve) {
+        chrome.storage.sync.get({ showLimit: true, showCooldown: true, homeURL: 'https://www.google.com/' }, function (result) {
+            resolve(result);
+        });
+    });
+};
 var connectToPopup = function () {
     var sitesBuffer = { sitesList: [], lastUpdate: 0 };
     chrome.runtime.onConnect.addListener(function (port) {
@@ -80,16 +93,13 @@ var connectToPopup = function () {
                     if (sitesBuffer && (sitesBuffer === null || sitesBuffer === void 0 ? void 0 : sitesBuffer.lastUpdate) < message.content.lastUpdate)
                         sitesBuffer = structuredClone(message.content);
                     break;
-                default: console.log('error');
             }
         };
         port.onMessage.addListener(handleMessage);
         port.onDisconnect.addListener(function () {
             chrome.storage.local.set({ isPopupOpened: false });
-            console.log('disconnected');
             if (sitesBuffer && sitesBuffer.sitesList.length > 0)
                 chrome.storage.sync.set({ sites: sitesBuffer.sitesList, lastUpdate: sitesBuffer.lastUpdate }, function () {
-                    console.log('saved sites to sync storage');
                     port.onMessage.removeListener(handleMessage);
                 });
         });
@@ -101,16 +111,15 @@ var getPopupOpened = function () {
     }); });
 };
 var backgroundTick = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var isPopupOpened, siteResult, sitesList, lastUpdate, activeTabs_1, now, delta_1, newSitesList, e_1;
+    var isPopupOpened, siteResult, sitesList, lastUpdate, activeTabs_1, tabsQuantity_1, settings, homeURL_1, now, delta_1, newSitesList, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 5, , 6]);
+                _a.trys.push([0, 7, , 8]);
                 return [4 /*yield*/, getPopupOpened()];
             case 1:
                 isPopupOpened = _a.sent();
-                console.log(isPopupOpened);
-                if (!!isPopupOpened) return [3 /*break*/, 4];
+                if (!!isPopupOpened) return [3 /*break*/, 6];
                 return [4 /*yield*/, fetchSites()];
             case 2:
                 siteResult = _a.sent();
@@ -119,9 +128,15 @@ var backgroundTick = function () { return __awaiter(void 0, void 0, void 0, func
                 return [4 /*yield*/, getActiveTabs()];
             case 3:
                 activeTabs_1 = _a.sent();
+                return [4 /*yield*/, getTabsQuantity()];
+            case 4:
+                tabsQuantity_1 = _a.sent();
+                return [4 /*yield*/, fetchSettings()];
+            case 5:
+                settings = _a.sent();
+                homeURL_1 = settings.homeURL;
                 now = Date.now();
                 delta_1 = now - lastUpdate;
-                console.log(delta_1);
                 newSitesList = sitesList.map(function (el) {
                     var updatedEl = __assign({}, el);
                     if (delta_1 > updatedEl.cooldownRemaining) {
@@ -141,25 +156,30 @@ var backgroundTick = function () { return __awaiter(void 0, void 0, void 0, func
                             if ((_a = activeTab.url) === null || _a === void 0 ? void 0 : _a.startsWith(updatedEl.address)) {
                                 updatedEl.limitRemaining = Math.max(0, updatedEl.limitRemaining - delta_1);
                                 if (updatedEl.limitRemaining === 0 && activeTab.id !== undefined) {
-                                    console.log('the tab will be closed');
                                     chrome.tabs.remove(activeTab.id);
+                                    if (tabsQuantity_1 === 1) {
+                                        var removeId_1 = activeTab.id;
+                                        chrome.tabs.create({ url: homeURL_1 }, function () {
+                                            if (removeId_1)
+                                                chrome.tabs.remove(removeId_1);
+                                        });
+                                    }
+                                    else
+                                        chrome.tabs.remove(activeTab.id);
                                 }
                             }
                         });
                     }
-                    console.log(updatedEl);
                     return updatedEl;
                 });
-                chrome.storage.sync.set({ sites: newSitesList, lastUpdate: Date.now() }, function () {
-                    console.log('saved sites to sync storage on background');
-                });
-                _a.label = 4;
-            case 4: return [3 /*break*/, 6];
-            case 5:
+                chrome.storage.sync.set({ sites: newSitesList, lastUpdate: Date.now() }, function () { });
+                _a.label = 6;
+            case 6: return [3 /*break*/, 8];
+            case 7:
                 e_1 = _a.sent();
                 console.log(e_1);
-                return [3 /*break*/, 6];
-            case 6: return [2 /*return*/];
+                return [3 /*break*/, 8];
+            case 8: return [2 /*return*/];
         }
     });
 }); };
@@ -182,8 +202,6 @@ chrome.alarms.create('tick', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener(function (alarm) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         if (alarm.name == 'tick') {
-            // 1 раз в минуту обновлять данные в sync 
-            console.log('tick happened');
             backgroundTick();
         }
         return [2 /*return*/];

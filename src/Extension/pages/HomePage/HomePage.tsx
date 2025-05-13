@@ -3,7 +3,7 @@ import AddWebsiteComponent from '../../widgets/AddWebsiteComponent';
 import ContentBlock from '../../widgets/WebsiteBlock';
 import StorageType from '../../shared/types/StorageType';
 import SettingsType from '../../shared/types/SettingsType';
-import { fetchSites, getActiveTabs, fetchSettings } from '../../shared/chromeGetters';
+import { fetchSites, getActiveTabs, fetchSettings, getTabsQuantity } from '../../shared/chromeGetters';
 import './HomePage.css'
 import MStoTime from '../../shared/SecondsToTime';
 
@@ -13,6 +13,7 @@ const HomePage = () => {
 
     const [siteList, setSiteList] = useState<StorageType[]>([]);
     const activeTabs = useRef<chrome.tabs.Tab[] | null>(null);
+    const tabsQuantity = useRef<number>(0)
     const updateInterval = useRef<number | undefined>(Date.now());
     const lastUpdate = useRef<number>(Date.now());
     const connectPort = useRef<chrome.runtime.Port | undefined>(undefined)
@@ -29,6 +30,7 @@ const HomePage = () => {
 
     const handleTabsUpdate = async () => {
         activeTabs.current = await getActiveTabs()
+        tabsQuantity.current = await getTabsQuantity()
     }
 
     // Create an async function for initialization + async function fro closing tab (if possible (i don't think so))
@@ -41,6 +43,7 @@ const HomePage = () => {
             connectPort.current = chrome.runtime.connect({ name: 'sitesSync' });
             
             activeTabs.current = await getActiveTabs()
+            tabsQuantity.current = await getTabsQuantity()
             settings.current = await fetchSettings()
             const siteResult = await fetchSites()
             setSiteList(siteResult.sites)
@@ -50,25 +53,21 @@ const HomePage = () => {
                 const now = Date.now();
                 const delta = now - lastUpdate.current;
                 lastUpdate.current = now;
-                console.log('Interval values: now:', now, 'lastUpdate current:' ,lastUpdate.current)
-                console.log(delta)
                 setSiteList((prevList) => prevList.map(el => {
                     let updatedEl = { ...el };
-                    activeTabs.current?.forEach((activeTab: chrome.tabs.Tab) => {
-                        if (activeTab.url?.startsWith(updatedEl.address)) {
-                            updatedEl.limitRemaining = Math.max(0, updatedEl.limitRemaining - delta);
-                            if (updatedEl.limitRemaining === 0 && activeTab.id !== undefined) {
-                                console.log('the tab will be closed')
-                                removeTab.current = activeTab.id;
-                            }
-                        }
-                    })
                     updatedEl.cooldownRemaining = Math.max(0, updatedEl.cooldownRemaining - delta);
                     if (updatedEl.cooldownRemaining === 0) {
                         updatedEl.cooldownRemaining = updatedEl.cooldownTime;
                         updatedEl.limitRemaining = updatedEl.limitTime;
                     }
-                    console.log(updatedEl)
+                    else activeTabs.current?.forEach((activeTab: chrome.tabs.Tab) => {
+                        if (activeTab.url?.startsWith(updatedEl.address)) {
+                            updatedEl.limitRemaining = Math.max(0, updatedEl.limitRemaining - delta);
+                            if (updatedEl.limitRemaining === 0 && activeTab.id !== undefined) {
+                                removeTab.current = activeTab.id;
+                            }
+                        }
+                    })
                     return updatedEl
                 }))
             }, 1000)
@@ -89,8 +88,15 @@ const HomePage = () => {
     useEffect(() => {
         if (connectPort.current) connectPort.current?.postMessage({ type: 'updateSiteList', content: {sitesList: siteList, lastUpdate: lastUpdate.current} })
         if (removeTab.current) {
-            console.log('removing')
-            chrome.tabs.remove(removeTab.current)
+            if(tabsQuantity.current === 1){
+                const removeId = removeTab.current
+                // chrome.tabs.create({url: settings.current?.homeURL})
+                // chrome.tabs.update(removeTab.current, {url: settings.current?.homeURL})
+                chrome.tabs.create({url: settings.current?.homeURL}, () => {
+                    if (removeId) chrome.tabs.remove(removeId)
+                })
+            }
+            else chrome.tabs.remove(removeTab.current)
             removeTab.current = undefined
         }
     }, [siteList])

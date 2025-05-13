@@ -17,6 +17,14 @@ const getActiveTabs = (): Promise<chrome.tabs.Tab[]> => {
     })
 }
 
+const getTabsQuantity = (): Promise<number> => {
+    return new Promise(resolve => {
+        chrome.tabs.query(({}), (tabs: chrome.tabs.Tab[]) => {
+            resolve(tabs.length)
+        })
+    })
+}
+
 const fetchSettings = (): Promise<SettingsType> => {
     return new Promise((resolve) => {
         chrome.storage.sync.get({ showLimit: true as boolean, showCooldown: true as boolean, homeURL: 'https://www.google.com/' as string }, (result: { showLimit: boolean, showCooldown: boolean, homeURL: string }) => {
@@ -25,4 +33,4 @@ const fetchSettings = (): Promise<SettingsType> => {
     })
 }
 
-export {fetchSites, getActiveTabs, fetchSettings}
+export {fetchSites, getActiveTabs, fetchSettings, getTabsQuantity}

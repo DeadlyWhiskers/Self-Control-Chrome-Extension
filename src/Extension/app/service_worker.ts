@@ -1,14 +1,14 @@
 import StorageType from "../shared/types/StorageType"
+import SettingsType from "../shared/types/SettingsType"
 
 const initStorage = () => {
     return new Promise((resolve) => {
-        resolve(true)
+        chrome.runtime.onInstalled.addListener(() => {
+            chrome.storage.sync.set({sites: [] as StorageType[], lastUpdate: Date.now(), showLimit: true, showCooldown: true, homeURL: 'https://www.google.com/'}, () => {
+                resolve(true)
+            })
+        })
     })
-    // chrome.runtime.onInstalled.addListener(() => {
-    //     chrome.storage.sync.set({sites: [] as StorageType[], lastUpdate: Date.now()}, () => {
-    //         console.log('Setup complete!');
-    //     })
-    // })
 }
 
 const fetchSites = (): Promise<{ sites: StorageType[], lastUpdate: number }> => {
@@ -27,6 +27,22 @@ return new Promise(resolve => {
 })
 }
 
+const getTabsQuantity = (): Promise<number> => {
+    return new Promise(resolve => {
+        chrome.tabs.query(({}), (tabs: chrome.tabs.Tab[]) => {
+            resolve(tabs.length)
+        })
+    })
+}
+
+const fetchSettings = (): Promise<SettingsType> => {
+    return new Promise((resolve) => {
+        chrome.storage.sync.get({ showLimit: true as boolean, showCooldown: true as boolean, homeURL: 'https://www.google.com/' as string }, (result: { showLimit: boolean, showCooldown: boolean, homeURL: string }) => {
+            resolve(result)
+        })
+    })
+}
+
 
 const connectToPopup = () => {
     let sitesBuffer: { sitesList: StorageType[], lastUpdate: number } = {sitesList: [], lastUpdate: 0}
@@ -39,7 +55,6 @@ const connectToPopup = () => {
                     if (sitesBuffer && sitesBuffer?.lastUpdate < message.content.lastUpdate)
                         sitesBuffer = structuredClone(message.content)
                     break;
-                default: console.log('error')
             }
         }
 
@@ -47,9 +62,7 @@ const connectToPopup = () => {
 
         port.onDisconnect.addListener(() => {
             chrome.storage.local.set({isPopupOpened: false})
-            console.log('disconnected')
             if (sitesBuffer && sitesBuffer.sitesList.length > 0) chrome.storage.sync.set({ sites: sitesBuffer.sitesList, lastUpdate: sitesBuffer.lastUpdate }, () => {
-                console.log('saved sites to sync storage')
                 port.onMessage.removeListener(handleMessage);
             })
         })
@@ -65,15 +78,16 @@ const getPopupOpened = () => {
 const backgroundTick = async () => {
     try{
         const isPopupOpened = await getPopupOpened();
-        console.log(isPopupOpened)
         if(!isPopupOpened){
                 const siteResult = await fetchSites()
                 const sitesList = siteResult.sites
                 const lastUpdate = siteResult.lastUpdate
                 const activeTabs = await getActiveTabs()
+                const tabsQuantity = await getTabsQuantity()
+                const settings = await fetchSettings()
+                const homeURL = settings.homeURL
                 const now = Date.now();
                 const delta = now - lastUpdate
-                console.log(delta)
                 const newSitesList = sitesList.map(el => {
                     let updatedEl = { ...el };
                     if(delta > updatedEl.cooldownRemaining) {
@@ -91,18 +105,21 @@ const backgroundTick = async () => {
                             if (activeTab.url?.startsWith(updatedEl.address)) {
                                 updatedEl.limitRemaining = Math.max(0, updatedEl.limitRemaining - delta);
                                 if (updatedEl.limitRemaining === 0 && activeTab.id !== undefined) {
-                                    console.log('the tab will be closed')
                                     chrome.tabs.remove(activeTab.id)
+                                    if(tabsQuantity === 1){
+                                        let removeId = activeTab.id
+                                        chrome.tabs.create({url: homeURL}, () => {
+                                            if (removeId) chrome.tabs.remove(removeId)
+                                        })
+                                        }
+                                        else chrome.tabs.remove(activeTab.id)
                                 }
                             }
                         })
                     }
-                    console.log(updatedEl)
                     return updatedEl
                 })
-                chrome.storage.sync.set({ sites: newSitesList, lastUpdate: Date.now() }, () => {
-                    console.log('saved sites to sync storage on background')
-                })
+                chrome.storage.sync.set({ sites: newSitesList, lastUpdate: Date.now() }, () => { })
             }
     }
     catch(e){
@@ -126,8 +143,6 @@ chrome.tabs.onUpdated.addListener(backgroundTick)
 chrome.alarms.create('tick', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name == 'tick') {
-        // 1 раз в минуту обновлять данные в sync 
-        console.log('tick happened')
         backgroundTick();
     }
 })

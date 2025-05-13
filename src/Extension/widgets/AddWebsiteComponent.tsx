@@ -13,16 +13,24 @@ import timeToMS from '../shared/timeToSeconds'
 
 const uploadWebsite = (data: FormFields) => {
     return new Promise<void>((resolve, reject) => {
-        chrome.storage.sync.get({sites: [] as StorageType[]}, (result: {sites: StorageType[]}) => {
+        chrome.storage.sync.get({sites: [] as StorageType[], homeUrl: 'https://www.google.com/' as string}, (result: {sites: StorageType[], homeUrl: string}) => {
             const urlToUpload = new URL(data.address);
-            result.sites.some((el) => {
+            for(const el of result.sites){
                 try{
-                    console.log(new URL(el.address).hostname)
-                    if(new URL(el.address).origin === urlToUpload.origin) reject(new Error('This website is already added!'));
+                    if(new URL(el.address).origin === urlToUpload.origin) {
+                        reject(new Error('This website is already added!'));
+                        return true;
+                    }
                 }catch{
-                    reject(new Error(`Invalid url was saved: ${el.address}, reinstall the extension`));
+                    {reject(new Error(`Invalid url was saved: ${el.address}, reinstall the extension`));
+                    return true;
                 }
-            })
+                }
+            }
+            if(result.homeUrl.startsWith(urlToUpload.origin) || urlToUpload.origin.startsWith(result.homeUrl)) {
+                reject(new Error('This is a home page!'));
+                return;
+            }
             const newSite = [...result.sites, {
                 name: data.name,
                 address: urlToUpload.origin,
@@ -50,8 +58,6 @@ const formSchema = z.object({
 type FormFields = z.infer<typeof formSchema>
 
 const AddWebsiteComponent = () => {
-    
-    console.log(timeToMS('20:44:15'))
 
     const [addActive, setAddActive] = useState(0);
 
@@ -72,7 +78,6 @@ const AddWebsiteComponent = () => {
             console.log(e)
             setError('formError', {message: (e instanceof Error) ? e.message : 'Unknown error'});
         }
-        console.log('submitted', data);
     }
 
     return (
