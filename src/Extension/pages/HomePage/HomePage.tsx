@@ -1,121 +1,163 @@
-import { useEffect, useRef, useState } from 'react';
-import AddWebsiteComponent from '../../widgets/AddWebsiteComponent';
-import ContentBlock from '../../widgets/WebsiteBlock';
-import StorageType from '../../shared/types/StorageType';
-import SettingsType from '../../shared/types/SettingsType';
-import { fetchSites, getActiveTabs, fetchSettings, getTabsQuantity } from '../../shared/chromeGetters';
-import './HomePage.css'
-import MStoTime from '../../shared/SecondsToTime';
+import { useEffect, useRef, useState } from "react";
+import AddWebsiteComponent from "../../widgets/AddWebsiteComponent";
+import ContentBlock from "../../widgets/WebsiteBlock";
+import StorageType from "../../shared/types/StorageType";
+import SettingsType from "../../shared/types/SettingsType";
+import {
+    fetchSites,
+    getActiveTabs,
+    fetchSettings,
+    getTabsQuantity,
+} from "../../shared/chromeGetters";
+import "./HomePage.css";
+import MStoTime from "../../shared/SecondsToTime";
 
 // Completely rework the timer system
 
 const HomePage = () => {
-
     const [siteList, setSiteList] = useState<StorageType[]>([]);
     const activeTabs = useRef<chrome.tabs.Tab[] | null>(null);
-    const tabsQuantity = useRef<number>(0)
+    const tabsQuantity = useRef<number>(0);
     const updateInterval = useRef<number | undefined>(Date.now());
     const lastUpdate = useRef<number>(Date.now());
-    const connectPort = useRef<chrome.runtime.Port | undefined>(undefined)
+    const connectPort = useRef<chrome.runtime.Port | undefined>(undefined);
     const removeTab = useRef<number | undefined>(undefined);
-    const settings = useRef<SettingsType | undefined>(undefined)
+    const settings = useRef<SettingsType | undefined>(undefined);
 
-    const handleStoreUpdates = async (changes: { [key: string]: chrome.storage.StorageChange; }) => {
+    const handleStoreUpdates = async (changes: {
+        [key: string]: chrome.storage.StorageChange;
+    }) => {
         if (changes.sites) {
-            const siteResult = await fetchSites()
-            setSiteList(siteResult.sites)
-            lastUpdate.current = siteResult.lastUpdate
+            const siteResult = await fetchSites();
+            setSiteList(siteResult.sites);
+            lastUpdate.current = siteResult.lastUpdate;
         }
-    }
+    };
 
     const handleTabsUpdate = async () => {
-        activeTabs.current = await getActiveTabs()
-        tabsQuantity.current = await getTabsQuantity()
-    }
+        activeTabs.current = await getActiveTabs();
+        tabsQuantity.current = await getTabsQuantity();
+    };
 
-    // Create an async function for initialization + async function fro closing tab (if possible (i don't think so))
+    const handlePortConnection = async () => {
+        console.warn("connection failed...");
+    };
+
     useEffect(() => {
-
         const Initialize = async () => {
-            chrome.storage.sync.onChanged.addListener(handleStoreUpdates)
-            chrome.tabs.onActivated.addListener(handleTabsUpdate)
-            chrome.tabs.onUpdated.addListener(handleTabsUpdate)
-            connectPort.current = chrome.runtime.connect({ name: 'sitesSync' });
             
-            activeTabs.current = await getActiveTabs()
-            tabsQuantity.current = await getTabsQuantity()
-            settings.current = await fetchSettings()
-            const siteResult = await fetchSites()
-            setSiteList(siteResult.sites)
+            chrome.storage.sync.onChanged.addListener(handleStoreUpdates);
+            chrome.tabs.onActivated.addListener(handleTabsUpdate);
+            chrome.tabs.onUpdated.addListener(handleTabsUpdate);
+            const port = chrome.runtime.connect({ name: "sitesSync" });
+            port.onDisconnect.addListener(handlePortConnection);
+            connectPort.current = port;
+            activeTabs.current = await getActiveTabs();
+            tabsQuantity.current = await getTabsQuantity();
+            settings.current = await fetchSettings();
+            const siteResult = await fetchSites();
+            setSiteList(siteResult.sites);
             // lastUpdate.current = siteResult.lastUpdate
-    
+
             updateInterval.current = setInterval(() => {
                 const now = Date.now();
                 const delta = now - lastUpdate.current;
                 lastUpdate.current = now;
-                setSiteList((prevList) => prevList.map(el => {
-                    let updatedEl = { ...el };
-                    updatedEl.cooldownRemaining = Math.max(0, updatedEl.cooldownRemaining - delta);
-                    if (updatedEl.cooldownRemaining === 0) {
-                        updatedEl.cooldownRemaining = updatedEl.cooldownTime;
-                        updatedEl.limitRemaining = updatedEl.limitTime;
-                    }
-                    else activeTabs.current?.forEach((activeTab: chrome.tabs.Tab) => {
-                        if (activeTab.url?.startsWith(updatedEl.address)) {
-                            updatedEl.limitRemaining = Math.max(0, updatedEl.limitRemaining - delta);
-                            if (updatedEl.limitRemaining === 0 && activeTab.id !== undefined) {
-                                removeTab.current = activeTab.id;
-                            }
-                        }
+                setSiteList((prevList) =>
+                    prevList.map((el) => {
+                        let updatedEl = { ...el };
+                        updatedEl.cooldownRemaining = Math.max(
+                            0,
+                            updatedEl.cooldownRemaining - delta
+                        );
+                        if (updatedEl.cooldownRemaining === 0) {
+                            updatedEl.cooldownRemaining = updatedEl.cooldownTime;
+                            updatedEl.limitRemaining = updatedEl.limitTime;
+                        } else
+                            activeTabs.current?.forEach((activeTab: chrome.tabs.Tab) => {
+                                if (activeTab.url?.startsWith(updatedEl.address)) {
+                                    updatedEl.limitRemaining = Math.max(
+                                        0,
+                                        updatedEl.limitRemaining - delta
+                                    );
+                                    if (
+                                        updatedEl.limitRemaining === 0 &&
+                                        activeTab.id !== undefined
+                                    ) {
+                                        removeTab.current = activeTab.id;
+                                    }
+                                }
+                            });
+                        return updatedEl;
                     })
-                    return updatedEl
-                }))
-            }, 1000)
-        }
+                );
+            }, 1000);
+        };
 
-        Initialize()
+        Initialize();
 
         return () => {
             // only when switching extension pages
-            chrome.tabs.onActivated.removeListener(handleTabsUpdate)
-            chrome.tabs.onUpdated.removeListener(handleTabsUpdate)
-            chrome.storage.sync.onChanged.removeListener(handleStoreUpdates)
-            clearInterval(updateInterval.current)
-            connectPort.current?.disconnect()
-        }
-    }, [])
+            if (connectPort.current) {
+                connectPort.current.disconnect();
+            }
+            chrome.tabs.onActivated.removeListener(handleTabsUpdate);
+            chrome.tabs.onUpdated.removeListener(handleTabsUpdate);
+            chrome.storage.sync.onChanged.removeListener(handleStoreUpdates);
+            clearInterval(updateInterval.current);
+            connectPort.current?.disconnect();
+        };
+    }, []);
 
     useEffect(() => {
-        if (connectPort.current) connectPort.current?.postMessage({ type: 'updateSiteList', content: {sitesList: siteList, lastUpdate: lastUpdate.current} })
-        if (removeTab.current) {
-            if(tabsQuantity.current === 1){
-                const removeId = removeTab.current
-                // chrome.tabs.create({url: settings.current?.homeURL})
-                // chrome.tabs.update(removeTab.current, {url: settings.current?.homeURL})
-                chrome.tabs.create({url: settings.current?.homeURL}, () => {
-                    if (removeId) chrome.tabs.remove(removeId)
-                })
-            }
-            else chrome.tabs.remove(removeTab.current)
-            removeTab.current = undefined
+        // console.warn("posting message via port", connectPort.current);
+        try {
+            if (connectPort.current !== undefined)
+                connectPort.current?.postMessage({
+                    type: "updateSiteList",
+                    content: { sitesList: siteList, lastUpdate: lastUpdate.current },
+                });
+        } catch (e) {
+            if (e instanceof Error) console.warn(e.message);
         }
-    }, [siteList])
+        if (removeTab.current) {
+            if (tabsQuantity.current === 1) {
+                const removeId = removeTab.current;
+                chrome.tabs.create({ url: settings.current?.homeURL }, () => {
+                    if (removeId) chrome.tabs.remove(removeId);
+                });
+            } else chrome.tabs.remove(removeTab.current);
+            removeTab.current = undefined;
+        }
+    }, [siteList]);
 
-    return <div className='list-layout'>
-        {siteList && siteList.map((el, i) => {
-            return <ContentBlock 
-            key={i} 
-            elementId={i} 
-            siteName={el.name} 
-            siteURL={el.address} 
-            limitTime={el.limitTime} 
-            cooldownTime={el.cooldownTime} 
-            limitRemaining={settings.current?.showLimit ? MStoTime(el.limitRemaining) : '●'} 
-            cooldownRemaining={settings.current?.showCooldown ? MStoTime(el.cooldownRemaining) : '●'} 
-            isLimitEnded={el.limitRemaining > 0} />
-        })}
-        <AddWebsiteComponent />
-    </div>;
+    return (
+        <div className="list-layout">
+            {siteList &&
+                siteList.map((el, i) => {
+                    return (
+                        <ContentBlock
+                            key={i}
+                            elementId={i}
+                            siteName={el.name}
+                            siteURL={el.address}
+                            limitTime={el.limitTime}
+                            cooldownTime={el.cooldownTime}
+                            limitRemaining={
+                                settings.current?.showLimit ? MStoTime(el.limitRemaining) : "●"
+                            }
+                            cooldownRemaining={
+                                settings.current?.showCooldown
+                                    ? MStoTime(el.cooldownRemaining)
+                                    : "●"
+                            }
+                            isLimitEnded={el.limitRemaining > 0}
+                        />
+                    );
+                })}
+            <AddWebsiteComponent />
+        </div>
+    );
 };
 
 export default HomePage;

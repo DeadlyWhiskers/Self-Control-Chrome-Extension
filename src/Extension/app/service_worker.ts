@@ -2,11 +2,8 @@ import StorageType from "../shared/types/StorageType"
 import SettingsType from "../shared/types/SettingsType"
 
 const initStorage = () => {
-    return new Promise((resolve) => {
-        chrome.runtime.onInstalled.addListener(() => {
-            chrome.storage.sync.set({sites: [] as StorageType[], lastUpdate: Date.now(), showLimit: true, showCooldown: true, homeURL: 'https://www.google.com/'}, () => {
-                resolve(true)
-            })
+    chrome.runtime.onInstalled.addListener(() => {
+        chrome.storage.sync.set({sites: [] as StorageType[], lastUpdate: Date.now(), showLimit: true, showCooldown: true, homeURL: 'https://www.google.com/'}, () => {
         })
     })
 }
@@ -127,8 +124,8 @@ const backgroundTick = async () => {
     }
 }
 
-const init = async () => {
-    await initStorage();
+const init = () => {
+    initStorage();
     connectToPopup();
     backgroundTick();
 }

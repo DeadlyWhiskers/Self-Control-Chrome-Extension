@@ -46,11 +46,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var initStorage = function () {
-    return new Promise(function (resolve) {
-        chrome.runtime.onInstalled.addListener(function () {
-            chrome.storage.sync.set({ sites: [], lastUpdate: Date.now(), showLimit: true, showCooldown: true, homeURL: 'https://www.google.com/' }, function () {
-                resolve(true);
-            });
+    chrome.runtime.onInstalled.addListener(function () {
+        chrome.storage.sync.set({ sites: [], lastUpdate: Date.now(), showLimit: true, showCooldown: true, homeURL: 'https://www.google.com/' }, function () {
         });
     });
 };
@@ -183,18 +180,11 @@ var backgroundTick = function () { return __awaiter(void 0, void 0, void 0, func
         }
     });
 }); };
-var init = function () { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, initStorage()];
-            case 1:
-                _a.sent();
-                connectToPopup();
-                backgroundTick();
-                return [2 /*return*/];
-        }
-    });
-}); };
+var init = function () {
+    initStorage();
+    connectToPopup();
+    backgroundTick();
+};
 init();
 chrome.tabs.onActivated.addListener(backgroundTick);
 chrome.tabs.onUpdated.addListener(backgroundTick);
