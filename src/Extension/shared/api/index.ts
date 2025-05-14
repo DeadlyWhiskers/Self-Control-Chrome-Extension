@@ -1,0 +1,1 @@
+export {fetchSites, getActiveTabs, fetchSettings, getTabsQuantity} from './ChromeGetters'

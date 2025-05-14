@@ -16,7 +16,7 @@ export default defineConfig({
           dest: '.',
         },
         {
-          src: 'src/Extension/app/assets/icons',
+          src: 'src/assets/icons',
           dest: './assets'
         }
       ],

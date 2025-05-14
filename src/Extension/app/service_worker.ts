@@ -1,5 +1,5 @@
-import StorageType from "../shared/types/StorageType"
-import SettingsType from "../shared/types/SettingsType"
+import { StorageType } from "../shared/types/StorageType"
+import { SettingsType } from "../shared/types/SettingsType"
 
 const initStorage = () => {
     chrome.runtime.onInstalled.addListener(() => {
